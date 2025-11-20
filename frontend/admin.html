@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin Panel - Schedule System</title>
+<style>
+:root{--accent:#0b5cff;--accent-dark:#084ed0;--bg:#f4f6f9;--text:#111;--muted:#666;--card-bg:#fff;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,sans-serif;}
+body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:250px;background:#fff;box-shadow:2px 0 10px rgba(0,0,0,0.1);display:flex;flex-direction:column;padding:20px;transition:0.3s;}
+.sidebar h2{color:var(--accent);margin-bottom:20px;text-align:center;}
+.nav-link{padding:12px 10px;border-radius:8px;margin-bottom:8px;color:var(--text);text-decoration:none;display:block;font-weight:500;}
+.nav-link:hover,.nav-link.active{background:var(--accent);color:white;}
+.logout-btn{margin-top:auto;background:red;color:white;padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:600;}
+.logout-btn:hover{background:darkred;}
+.main-content{flex:1;display:flex;flex-direction:column;}
+header{background:var(--card-bg);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:relative;}
+header h1{font-size:1.3rem;font-weight:600;}
+.hamburger{display:none;font-size:24px;cursor:pointer;}
+.inboxx{background-color: #0b5cff;padding: 10px; margin-right: 10px;border-radius: 5px; color: white;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.live-counts{padding:20px;}
+.livecuntdiv{margin-bottom: 10px;}
+.live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+.live-card{background:var(--card-bg);border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);padding:18px;text-align:center;transition:0.3s;position:relative;}
+.live-card:hover{transform:translateY(-3px);}
+.live-card h3{font-size:1rem;color:var(--muted);margin-bottom:6px;}
+.live-card p{font-size:1.1rem;font-weight:700;color:var(--accent-dark);}
+.live-card small{display:block;margin-top:6px;color:var(--muted);}
+.live-card select{position:absolute;top:8px;right:8px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;cursor:pointer;font-size:12px;}
+section{padding:20px;}
+.client-table{width:100%;border-collapse:collapse;margin-top:10px;}
+.client-table th,.client-table td{border:1px solid #ddd;padding:10px;text-align:center;}
+.client-table th{background:#e8f0ff;}
+.add-task{background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);margin-top:20px;}
+.add-task h3{margin-bottom:12px;}
+.add-task input,.add-task select{padding:12px;border:1px solid #ccc;border-radius:8px;width:100%;margin-bottom:12px;font-size:15px;}
+.add-task input[type="date"]{appearance:none;-webkit-appearance:none;background-color:#fff;cursor:pointer;}
+.add-task input[type="date"]::-webkit-calendar-picker-indicator{color:transparent;background:url('data:image/svg+xml;utf8,<svg fill="gray" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>') no-repeat center;background-size:18px;opacity:0.6;}
+.add-task button{background:var(--accent);color:white;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;transition:0.2s;}
+.add-task button:hover{background:var(--accent-dark);}
+.toast{position:fixed;bottom:20px;right:20px;background:#333;color:white;padding:12px 20px;border-radius:8px;opacity:0;transition:0.5s;}
+.toast.show{opacity:1;}
+.profile-menu{position:absolute;top:60px;right:24px;background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none;flex-direction:column;width:200px;z-index:1000;}
+.profile-menu.active{display:flex;}
+.profile-menu div{padding:12px 16px;border-bottom:1px solid #eee;font-size:14px;color:#333;}
+.profile-menu div:last-child{border:none;cursor:pointer;background:red;color:#fff;font-weight:600;text-align:center;border-radius:0 0 10px 10px;}
+.profile-menu div:last-child:hover{background:darkred;}
+@media(max-width:768px){.sidebar{position:fixed;left:-260px;top:0;height:100vh;z-index:1000;}.sidebar.active{left:0;}.hamburger{display:block;}}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar">
+  <h2>Admin</h2>
+  <a href="#" class="nav-link active">Dashboard</a>
+  <button class="logout-btn" id="logoutBtn">Log Out</button>
+</div>
+
+<div class="main-content">
+  <header>
+    <span class="hamburger" id="hamburger"></span>
+    <div class="inboxx">
+      <h1>Schedule System - Admin Panel</h1>
+    </div>
+    <div id="adminProfile" style="display:flex;gap:10px;align-items:center;cursor:pointer;"></div>
+
+    <div class="profile-menu" id="profileMenu">
+      <div id="profileId">ID: —</div>
+      <div id="profileRole">Role: —</div>
+      <div id="profileLogout">Logout</div>
+    </div>
+  </header>
+
+  <div class="live-counts">
+    <h3 class="livecuntdiv">Client Work Summary</h3>
+    <div class="live-grid" id="liveClientGrid"><div class="live-card"><h3>Loading Clients...</h3></div></div>
+  </div>
+
+  <section>
+    <h3>User List</h3>
+    <table class="client-table" id="userTable">
+      <thead><tr><th>Name</th><th>User ID</th><th>Handling Clients</th></tr></thead>
+      <tbody id="userBody"><tr><td colspan="3">Loading...</td></tr></tbody>
+    </table>
+
+    <div class="add-task">
+      <h3>Assign Client & Targets</h3>
+      <input type="text" id="clientName" placeholder="Client Name">
+      <input type="number" id="weeklyPoster" placeholder="Weekly Posters Count">
+      <input type="number" id="weeklyReel" placeholder="Weekly Reels Count">
+      <select id="assignedUser"><option value="">Select User</option></select>
+      <input type="date" id="startDate" placeholder="Work Starting Date (optional)">
+      <button id="assignTaskBtn">Assign To User</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toastMsg">Message</div>
+
+<script>
+// Hamburger toggle
+const sidebar = document.getElementById('sidebar');
+document.getElementById('hamburger').onclick = () => sidebar.classList.toggle('active');
+
+// Toast
+function showToast(msg){
+  const toast = document.getElementById('toastMsg');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 3000);
+}
+
+// Logout
+function logout(){
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  showToast('Logged out successfully!');
+  setTimeout(()=>window.location.href='index.html', 500);
+}
+document.getElementById('logoutBtn').onclick = logout;
+
+// Load admin info & initial data
+window.onload = () => {
+  const token = localStorage.getItem('token');
+  const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+  if(!token){ showToast('⚠️ Please login first'); setTimeout(()=>window.location.href='index.html',500); return; }
+  if((storedUser.role||'').toLowerCase() !== 'admin'){ showToast('⚠️ Please login as admin'); setTimeout(()=>window.location.href='index.html',500); return; }
+
+  const avatarLetter = (storedUser.username||'A').charAt(0).toUpperCase();
+  const displayName = storedUser.name || storedUser.username || 'Admin';
+  const adminProfile = document.getElementById('adminProfile');
+  adminProfile.innerHTML = `<div style="background:var(--accent);color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;">${avatarLetter}</div><div><div style="font-weight:700">${displayName}</div><div style="font-size:12px;color:var(--muted)">${storedUser.role||'admin'}</div></div>`;
+
+  document.getElementById('profileId').textContent = `ID: ${storedUser.userId||storedUser._id||storedUser.username||'—'}`;
+  document.getElementById('profileRole').textContent = `Role: ${storedUser.role||'admin'}`;
+
+  loadUsers();
+  loadClientSummary();
+};
+
+// Profile menu
+const profileMenu = document.getElementById('profileMenu');
+const adminProfile = document.getElementById('adminProfile');
+adminProfile.onclick = () => profileMenu.classList.toggle('active');
+document.getElementById('profileLogout').onclick = () => { profileMenu.classList.remove('active'); logout(); };
+document.addEventListener('click', e => { if(!adminProfile.contains(e.target) && !profileMenu.contains(e.target)){ profileMenu.classList.remove('active'); } });
+
+// Load users
+async function loadUsers(){
+  try{
+    const token = localStorage.getItem('token');
+    const res = await fetch(`http://localhost:4000/api/users`, { headers: { 'Authorization':'Bearer '+token } });
+    const data = await res.json();
+    const usersArray = Array.isArray(data.users)?data.users:[];
+
+    const filteredUsers = usersArray.filter(u => (u.role||'').toLowerCase() === 'user');
+    const tbody = document.getElementById('userBody');
+    const userSelect = document.getElementById('assignedUser');
+    tbody.innerHTML='';
+    userSelect.innerHTML='<option value="">Select User</option>';
+    if(filteredUsers.length===0){ tbody.innerHTML='<tr><td colspan="3">No users found</td></tr>'; return; }
+
+    filteredUsers.forEach(u=>{
+      const id = u.userId || u._id || u.username || '—';
+      const clientsCount = u.clientsCount||0;
+      const name = u.name || u.username || '—';
+      tbody.innerHTML += `<tr><td>${escapeHtml(name)}</td><td>${escapeHtml(id)}</td><td>${clientsCount}</td></tr>`;
+      const opt = document.createElement('option'); opt.value=id; opt.textContent=`${name} (${id})`; userSelect.appendChild(opt);
+    });
+  }catch(e){ console.error(e); document.getElementById('userBody').innerHTML='<tr><td colspan="3">Error loading users</td></tr>'; showToast('Error loading users'); }
+}
+
+// Load client summary
+async function loadClientSummary(){
+  try{
+    const token = localStorage.getItem('token');
+    const res = await fetch(`http://localhost:4000/api/clients`, { headers:{'Authorization':'Bearer '+token} });
+    const data = await res.json();
+    const clients = Array.isArray(data.clients)?data.clients:[];
+
+    const grid = document.getElementById('liveClientGrid'); 
+    grid.innerHTML='';
+    if(!clients.length){ grid.innerHTML='<div class="live-card"><h3>No clients found</h3></div>'; return; }
+
+    clients.forEach(c=>{
+      const name = c.name || '—';
+      const weeklyPosters = (c.weeklyTotals && c.weeklyTotals.posters) ? c.weeklyTotals.posters : 0;
+      const weeklyReels = (c.weeklyTotals && c.weeklyTotals.reels) ? c.weeklyTotals.reels : 0;
+
+      // Admin has assignments array, user does not
+      let assignedUserName = c.assignedTo || '—';
+      let assignedUserId = c.userId || '—';
+      if(Array.isArray(c.assignments) && c.assignments.length){
+        const first = c.assignments[0];
+        assignedUserName = first.assignedTo || first.userId || '—';
+        assignedUserId = first.userId || '—';
+      }
+
+      const card = document.createElement('div'); 
+      card.className='live-card';
+      card.innerHTML=`
+        <h3>${escapeHtml(name)}</h3>
+        <p>🖼️ ${weeklyPosters} posters/week · 🎞️ ${weeklyReels} reels/week</p>
+        <small>Assigned to: <strong>${escapeHtml(assignedUserName)}</strong> (${escapeHtml(assignedUserId)})</small>
+        <select onchange="if(this.value==='delete'){deleteClient('${encodeURIComponent(name)}');this.value='';}"><option value="">Options</option><option value="delete">Delete Client</option></select>`;
+      grid.appendChild(card);
+    });
+  }catch(e){ console.error(e); showToast('Error loading clients'); grid.innerHTML='<div class="live-card"><h3>Error loading clients</h3></div>'; }
+}
+
+
+// Assign task
+document.getElementById('assignTaskBtn').onclick = async () => {
+  const client = document.getElementById('clientName').value.trim();
+  const weeklyPosters = parseInt(document.getElementById('weeklyPoster').value||'0',10);
+  const weeklyReels = parseInt(document.getElementById('weeklyReel').value||'0',10);
+  const assignedUser = document.getElementById('assignedUser').value;
+  const start = document.getElementById('startDate').value||null;
+
+  if(!client||!assignedUser){ showToast('⚠️ Fill client and user'); return; }
+
+  try{
+    const token = localStorage.getItem('token');
+    const body = { clientName: client, weeklyTotals:{posters:weeklyPosters,reels:weeklyReels}, assignedUser, startDate:start };
+    const res = await fetch(`http://localhost:4000/api/assignments`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify(body) });
+    const data = await res.json();
+    if(!res.ok){ showToast('❌ '+(data.error||'Failed to assign')); return; }
+
+    showToast(`✅ Assigned successfully: ${weeklyPosters} posters/week, ${weeklyReels} reels/week`);
+    ['clientName','weeklyPoster','weeklyReel','startDate'].forEach(id=>document.getElementById(id).value='');
+    loadUsers(); loadClientSummary();
+  }catch(e){ console.error(e); showToast('❌ Server error'); }
+};
+
+// Delete client
+async function deleteClient(clientName){
+  if(!confirm('Are you sure you want to delete this client?')) return;
+  try{
+    const token = localStorage.getItem('token');
+    const res = await fetch(`http://localhost:4000/api/clients/${clientName}`, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+    if(!res.ok){ showToast('❌ Failed to delete'); return; }
+    showToast('✅ Client deleted'); loadUsers(); loadClientSummary();
+  }catch(e){ console.error(e); showToast('❌ Server error'); }
+}
+
+// Escape HTML helper
+function escapeHtml(str){ if(str==null)return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+</script>
+</body>
+</html>

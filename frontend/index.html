@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule System</title>
+<style>
+:root {
+  --accent: #0b5cff;
+  --accent-dark: #084ed0;
+  --bg: #f4f6f9;
+  --text: #111;
+  --muted: #666;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,sans-serif;}
+body{background:var(--bg);color:var(--text);}
+.container{max-width:1200px;margin:0 auto;padding:16px;}
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;background:#fff;border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);flex-wrap:wrap;
+}
+.logo{
+  width:45px;height:45px;background:linear-gradient(135deg,var(--accent),#6b8cff);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.2rem;border-radius:50%;
+}
+.header-title{flex:1;text-align:center;font-weight:600;font-size:1.4rem;}
+.header-right{position:relative;display:flex;align-items:center;gap:12px;}
+.avatar{
+  width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#6b8cff);
+  display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:1rem;cursor:pointer;
+}
+.profile-popup{
+  position:absolute;top:50px;right:0;background:white;padding:12px 16px;border-radius:10px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.15);display:none;flex-direction:column;gap:8px;min-width:220px;
+  z-index:999;
+}
+.profile-popup p{margin:0;font-size:0.95rem;color:var(--text);}
+.profile-popup span{color:var(--muted);}
+.logout-btn{
+  background:red;color:white;border:none;padding:8px;border-radius:6px;cursor:pointer;margin-top:8px;
+}
+.logout-btn:hover{background:darkred;}
+.banner{
+  margin-top:10px;padding:20px 10px;
+  background:#e8f0ff;border-radius:12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+.banner img{width:150px;height:150px;object-fit:cover;border-radius:12px;}
+.banner-desc{max-width:700px;color:#444;font-size:1rem;line-height:1.5;}
+.banner-buttons{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.button-small{
+  padding:10px 20px;border:none;border-radius:8px;background:var(--accent);
+  color:#fff;cursor:pointer;font-weight:500;transition:0.3s;
+}
+.button-small:hover{background:var(--accent-dark);}
+.client-card{
+  background:#fff;padding:16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.08);margin-top:16px;
+  max-width:700px;margin-left:auto;margin-right:auto;
+}
+.notes-list{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.note-item{padding:8px 12px;background:#f0f0f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.note-item span{flex:1;}
+.note-item button{background:red;color:white;border:none;padding:4px 8px;border-radius:6px;cursor:pointer;margin-left:200px;margin-bottom:10px;}
+.note-item button:hover{background:rgb(255, 10, 10);}
+.note-editor{margin-top:12px;display:none;flex-direction:column;gap:8px;}
+.note-editor-header{display:flex;align-items:center;gap:8px;}
+textarea.notepad{
+  background:#fff7d2;padding:12px;border-radius:10px;font-family:monospace;white-space:pre-wrap;min-height:120px;
+}
+.modal{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;
+}
+.modal.active{display:flex;}
+.modal-content{
+  background:white;padding:24px;border-radius:12px;width:90%;max-width:400px;position:relative;
+  display:flex;flex-direction:column;gap:12px;
+}
+.modal-content h2{text-align:center;margin-bottom:8px;}
+.modal-content input, .modal-content select{
+  padding:10px;border:1px solid #ccc;border-radius:8px;width:100%;
+}
+.modal-content button{
+  background:var(--accent);color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;
+}
+.modal-content button:hover{background:var(--accent-dark);}
+.close-area{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+#registerSuccess{display:none; color:green; font-weight:bold; text-align:center; margin-top:8px;}
+footer{margin-top:32px;text-align:center;color:var(--muted);font-size:0.85rem;}
+@media(max-width:768px){
+  .banner img{width:120px;height:120px;}
+  .banner-buttons{flex-direction:column;width:100%;gap:10px;}
+  .banner-buttons .button-small{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<header>
+  <div class="logo">S</div>
+  <div class="header-title">Schedule System</div>
+  <div class="header-right" id="headerRight">
+    <div class="profile-popup" id="profilePopup">
+      <p><b>User ID:</b> <span id="popupUser"></span></p>
+      <p><b>Role:</b> <span id="popupRole"></span></p>
+      <div id="panelButtons" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;"></div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </div>
+</header>
+
+<div class="banner">
+  <img src="/frontend/Stocks/istockphoto-1072268542-612x612.jpg" alt="System Image">
+  <div class="banner-desc">
+    Manage clients, assign weekly schedules for posters & reels. Admin assigns tasks, users track daily schedules, and month-end reports are generated. Mobile-friendly & responsive.
+  </div>
+  <div class="banner-buttons" id="bannerButtons">
+    <button class="button-small" id="registerBtn">Register</button>
+    <button class="button-small" id="loginBtn">Log In</button>
+  </div>
+</div>
+
+<div class="client-card" id="clientArea">
+  <h3>Note Pad</h3>
+  <button id="addNoteBtn" class="button-small">Add Note</button>
+  <div class="notes-list" id="notesList"></div>
+  <div class="note-editor" id="noteEditor">
+    <div class="note-editor-header">
+      <button id="closeNoteBtn">← Close</button>
+      <input type="text" id="noteTitle" placeholder="Enter note title...">
+    </div>
+    <textarea id="noteContent" class="notepad" placeholder="Type your content here..."></textarea>
+    <button id="saveNoteBtn" class="button-small">Save Note</button>
+  </div>
+</div>
+
+<footer>Created by Santhosh</footer>
+</div>
+
+<!-- Register Modal -->
+<div class="modal" id="registerModal">
+  <div class="close-area" id="closeRegister"></div>
+  <div class="modal-content">
+    <h2>Register</h2>
+    <input type="text" id="regFirstName" placeholder="Enter first name">
+    <input type="text" id="regUserId" placeholder="Enter user ID">
+    <input type="password" id="regPass" placeholder="Enter password">
+    <select id="regRole">
+      <option value="">Select Role</option>
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button id="submitRegister">Register</button>
+    <div id="registerSuccess">✅ Successfully Registered!</div>
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal" id="loginModal">
+  <div class="close-area" id="closeLogin"></div>
+  <div class="modal-content">
+    <h2>Log In</h2>
+    <input type="text" id="loginUserId" placeholder="Enter User ID">
+    <input type="password" id="loginPass" placeholder="Enter password">
+    <button id="submitLogin">Log In</button>
+  </div>
+</div>
+<script>
+  
+// ======================== Notes logic ========================
+let notes = JSON.parse(localStorage.getItem('notes')) || [];
+let selectedNoteIndex = null;
+function renderNotes(){
+  const notesList=document.getElementById('notesList');
+  notesList.innerHTML='';
+  notes.forEach((n,i)=>{
+    const div=document.createElement('div');
+    div.className='note-item';
+    div.innerHTML=`<span>${n.title||'Untitled'}</span><button onclick="deleteNote(event,${i})">X</button>`;
+    div.onclick=(e)=>{if(e.target.tagName!=='BUTTON')openNote(i);};
+    notesList.appendChild(div);
+  });
+}
+function openNote(i){
+  selectedNoteIndex=i;
+  document.getElementById('noteEditor').style.display='flex';
+  document.getElementById('noteTitle').value=notes[i].title;
+  document.getElementById('noteContent').value=notes[i].content;
+}
+function deleteNote(e,i){
+  e.stopPropagation();
+  if(confirm('Delete this note?')){
+    notes.splice(i,1);
+    localStorage.setItem('notes',JSON.stringify(notes));
+    renderNotes();
+    document.getElementById('noteEditor').style.display='none';
+  }
+}
+document.getElementById('addNoteBtn').onclick=()=>{
+  const n={title:'',content:''};
+  notes.push(n);
+  renderNotes();
+  openNote(notes.length-1);
+};
+document.getElementById('closeNoteBtn').onclick=()=>{ document.getElementById('noteEditor').style.display='none'; };
+document.getElementById('saveNoteBtn').onclick=()=>{
+  if(selectedNoteIndex===null)return;
+  notes[selectedNoteIndex].title=document.getElementById('noteTitle').value||'Untitled';
+  notes[selectedNoteIndex].content=document.getElementById('noteContent').value;
+  localStorage.setItem('notes',JSON.stringify(notes));
+  renderNotes();
+  alert('Note saved ✅');
+};
+renderNotes();
+
+// ======================== Modals ========================
+const registerModal=document.getElementById('registerModal');
+const loginModal=document.getElementById('loginModal');
+document.getElementById('registerBtn').onclick=()=>registerModal.classList.add('active');
+document.getElementById('loginBtn').onclick=()=>loginModal.classList.add('active');
+document.getElementById('closeRegister').onclick=()=>registerModal.classList.remove('active');
+document.getElementById('closeLogin').onclick=()=>loginModal.classList.remove('active');
+
+// ======================== Helpers ========================
+const API_BASE = 'http://localhost:4000';
+
+// ======================== Auth ========================
+function setAuth(user, token){
+  localStorage.setItem('token', token);
+  localStorage.setItem('user', JSON.stringify(user));
+  createProfileIcon(user.username, user.role);
+}
+
+// ======================== Banner & Panel Buttons ========================
+function updateBannerButtons(role){
+  const bannerDiv=document.getElementById('bannerButtons');
+  bannerDiv.innerHTML='';
+  const btn=document.createElement('button');
+  btn.className='button-small';
+  btn.textContent = role==='admin' ? 'Go to Admin Panel' : 'Go to User Panel';
+  btn.onclick=()=>window.location.href = role==='admin' ? 'admin.html' : 'u.html';
+  bannerDiv.appendChild(btn);
+}
+
+function renderPanelButtons(role){
+  const panelDiv=document.getElementById('panelButtons');
+  panelDiv.innerHTML='';
+  const btn=document.createElement('button');
+  btn.className='button-small';
+  btn.textContent = role==='admin' ? 'Go to Admin Panel' : 'Go to User Panel';
+  btn.onclick=()=>window.location.href = role==='admin' ? 'admin.html' : 'u.html';
+  panelDiv.appendChild(btn);
+  updateBannerButtons(role);
+}
+
+// ======================== Register Fetch ========================
+document.getElementById('submitRegister').onclick = async () => {
+  const fname = document.getElementById('regFirstName').value.trim();
+  const uid = document.getElementById('regUserId').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const role = document.getElementById('regRole').value;
+  const successMsg = document.getElementById('registerSuccess');
+
+  if (!fname || !uid || !pass || !role) { 
+    alert('Please fill all fields'); 
+    return; 
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: fname, username: uid, password: pass, role })
+    });
+
+    const data = await res.json();
+    if(res.ok && data.token){
+      successMsg.style.display = 'block';
+      setAuth(data.user, data.token);
+      setTimeout(() => { 
+        successMsg.style.display = 'none'; 
+        registerModal.classList.remove('active'); 
+      }, 1200);
+    } else {
+      alert(data.error || 'Registration failed');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Server error');
+  }
+};
+
+// ======================== Login Fetch ========================
+document.getElementById('submitLogin').onclick=async ()=>{
+  const uid=document.getElementById('loginUserId').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!uid||!pass){alert('Enter all fields'); return;}
+
+  try{
+    const res=await fetch(`${API_BASE}/api/login`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ username:uid, password:pass })
+    });
+    const data=await res.json();
+    if(res.ok && data.token){
+      setAuth(data.user, data.token);
+      alert(`Logged in as ${data.user.username}`);
+      loginModal.classList.remove('active');
+    }else{
+      alert(data.error || 'Login failed');
+    }
+  }catch(err){ console.error(err); alert('Server error'); }
+};
+
+// ======================== Profile Icon + Logout ========================
+function createProfileIcon(username, role){
+  const headerRight=document.getElementById('headerRight');
+  
+  // append avatar but keep popup in DOM
+  let avatar=document.createElement('div');
+  avatar.className='avatar';
+  avatar.textContent=username.charAt(0).toUpperCase();
+  headerRight.appendChild(avatar);
+
+  const popup=document.getElementById('profilePopup');
+  document.getElementById('popupUser').textContent=username;
+  document.getElementById('popupRole').textContent=role;
+
+  avatar.onclick=()=>{ 
+    popup.style.display = popup.style.display==='flex' ? 'none' : 'flex';
+  };
+
+  document.getElementById('logoutBtn').onclick=()=>{
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    popup.style.display='none';
+    headerRight.innerHTML=''; // remove avatar only
+    const bannerDiv=document.getElementById('bannerButtons');
+    bannerDiv.innerHTML=`<button class="button-small" id="registerBtn">Register</button>
+                          <button class="button-small" id="loginBtn">Log In</button>`;
+    document.getElementById('registerBtn').onclick=()=>registerModal.classList.add('active');
+    document.getElementById('loginBtn').onclick=()=>loginModal.classList.add('active');
+    alert('Logged out successfully');
+  };
+
+  // close popup if clicked outside
+  document.addEventListener('click', (e)=>{
+    if(!headerRight.contains(e.target)){
+      popup.style.display='none';
+    }
+  });
+
+  renderPanelButtons(role);
+}
+
+// ======================== Auto-login if token exists ========================
+window.onload = ()=>{
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  if(token && user){
+    createProfileIcon(user.username, user.role);
+  }
+};
+</script>
+</body>
+</html>

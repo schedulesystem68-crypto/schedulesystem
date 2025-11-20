@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>User Panel — Client Assignments & Calendar</title>
+<style>
+:root{
+  --bg:#f3f6fb;
+  --card:#ffffff;
+  --accent:#0b5cff;
+  --accent-dark:#084ed0;
+  --muted:#6b7280;
+  --completed:#10b981;
+  --poster-light:#dbeafe;
+  --poster-dark:#0b5cff;
+  --reel-light:#ffffff;
+  --reel-dark:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px;}
+.wrap{width:100%;max-width:1050px;}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;position:relative;}
+header h1{font-size:20px;color:var(--accent-dark);}
+.profile{position:relative;cursor:pointer;}
+.avatar{width:40px;height:40px;border-radius:10%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
+.header-box {display: flex;align-items: center;justify-content: space-between;padding: 16px 20px;margin-bottom: 18px;border: 1px solid rgba(11, 92, 255, 0.2);border-radius: 12px;background: var(--card);box-shadow: 0 4px 12px rgba(0,0,0,0.05);flex-wrap: wrap;gap: 8px;}
+.profile-popup{display:none;position:absolute;top:50px;right:0;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:12px;width:180px;z-index:100;}
+.profile-popup div{margin-bottom:6px;font-size:14px;color:var(--accent-dark);}
+.profile-popup button{width:100%;padding:6px 8px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;}
+.panel{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(12,24,58,0.06);margin-bottom:18px;}
+.as{margin-bottom: 15px;}
+.client-list{display:flex;flex-direction:column;gap:12px;margin-bottom:12px;}
+.client-item{padding:10px;border-radius:8px;border:1px solid #e6eefc;cursor:pointer;}
+.client-item.active{background:#eef6ff;}
+button.primary{padding:8px 10px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;}
+.calendar-container{width:100%;max-width:700px;}
+.month-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.month-controls div{display:flex;flex-direction:column;}
+.month-controls label{font-weight:600;margin-bottom:4px;}
+.month-controls select,input{padding:4px 6px;border-radius:6px;border:1px solid #ccc;}
+.weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-weight:700;color:var(--accent-dark);border:1px solid rgba(11,92,255,0.2);border-bottom:none;background:#f1f5ff;}
+.weekdays div{padding:10px 6px;border-right:1px solid rgba(11,92,255,0.2);}
+.weekdays div:last-child{border-right:none;}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid rgba(11,92,255,0.2);border-radius:8px;overflow:hidden;background:white;}
+.day{border:1px solid rgba(11,92,255,0.06);min-height:80px;text-align:center;display:flex;align-items:flex-start;justify-content:center;font-weight:600;color:var(--accent-dark);position:relative;cursor:pointer;flex-direction:column;padding-top:6px;transition: all 0.3s;}
+.day.empty{background:#f9fbff;border:none;cursor:default;}
+.poster{background:var(--poster-light);color:var(--accent-dark);}
+.reel{background:var(--reel-light);color:var(--accent-dark);}
+.poster.completed{background:var(--poster-dark);color:#fff;}
+.reel.completed{background:var(--reel-dark);color:#fff;}
+.badge{font-size:10px;font-weight:600;padding:2px 4px;border-radius:4px;margin-top:2px;color:#fff;display:inline-block;}
+.poster .badge{background:var(--poster-dark);}
+.reel .badge{background:var(--reel-dark);}
+.summary{margin-top:12px;padding:10px;border:1px solid rgba(11,92,255,0.2);border-radius:8px;background:#f1f5ff;}
+.summary div{margin-bottom:6px;}
+.weekdays-set{margin-top:12px;padding:10px;border:1px solid rgba(11,92,255,0.2);border-radius:8px;background:#f9faff;}
+.weekdays-set label{margin-right:8px;}
+@media(max-width:940px){.day{min-height:60px;font-size:12px;}}
+.footer {width: 100%;text-align: center;padding: 12px 0;margin-top: 24px;color: var(--muted);font-size: 13px;border-top: 1px solid rgba(11, 92, 255, 0.1);background: var(--bg);padding-bottom: 5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="header-box">
+  <h1>USER PANEL</h1>
+  <div class="profile" id="profileIcon">
+    <div class="avatar" id="userInitial">U</div>
+    <div class="profile-popup" id="profilePopup">
+      <div><strong>ID:</strong> <span id="popupId">user123</span></div>
+      <div><strong>Name:</strong> <span id="popupName">User</span></div>
+      <div><strong>Role:</strong> <span id="popupRole">User</span></div>
+      <button id="popupLogoutBtn">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="panel">
+  <h3 class="as">Assigned Clients</h3>
+  <div class="client-list" id="clientList">Loading...</div>
+</div>
+
+<div class="panel calendar-container">
+  <div class="month-controls">
+    <div>
+      <label for="monthPicker">Month</label>
+      <input type="month" id="monthPicker">
+    </div>
+    <div>
+      <label for="startWeekday">Start Weekday</label>
+      <select id="startWeekday">
+        <option value="1">Mon</option><option value="2">Tue</option><option value="3">Wed</option>
+        <option value="4">Thu</option><option value="5">Fri</option><option value="6">Sat</option><option value="7">Sun</option>
+      </select>
+    </div>
+    <div>
+      <label for="endDate">End Date</label>
+      <select id="endDate">
+        <option value="28">28</option><option value="30">30</option><option value="31" selected>31</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="weekdays">
+    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+  </div>
+  <div class="calendar" id="calendar"></div>
+
+  <div class="summary" id="monthlySummary">
+    <div id="totalPosters">Posters: 0</div>
+    <div id="totalReels">Reels: 0</div>
+    <div id="totalCompleted">Completed: 0</div>
+    <button id="resetSummary" class="primary" style="background:#ef4444;margin-top:8px;">Reset</button>
+  </div>
+
+  <div class="weekdays-set" id="weekdaysSet" style="display:none;">
+    <strong>Set Weekdays for Client</strong>
+    <div style="margin-top:6px;">
+      <div>Posters:</div>
+      <label><input type="checkbox" class="posterDay" value="Mon"> Mon</label>
+      <label><input type="checkbox" class="posterDay" value="Tue"> Tue</label>
+      <label><input type="checkbox" class="posterDay" value="Wed"> Wed</label>
+      <label><input type="checkbox" class="posterDay" value="Thu"> Thu</label>
+      <label><input type="checkbox" class="posterDay" value="Fri"> Fri</label>
+      <label><input type="checkbox" class="posterDay" value="Sat"> Sat</label>
+      <label><input type="checkbox" class="posterDay" value="Sun"> Sun</label>
+    </div>
+    <div style="margin-top:6px;">
+      <div>Reels:</div>
+      <label><input type="checkbox" class="reelDay" value="Mon"> Mon</label>
+      <label><input type="checkbox" class="reelDay" value="Tue"> Tue</label>
+      <label><input type="checkbox" class="reelDay" value="Wed"> Wed</label>
+      <label><input type="checkbox" class="reelDay" value="Thu"> Thu</label>
+      <label><input type="checkbox" class="reelDay" value="Fri"> Fri</label>
+      <label><input type="checkbox" class="reelDay" value="Sat"> Sat</label>
+      <label><input type="checkbox" class="reelDay" value="Sun"> Sun</label>
+    </div>
+    <button id="applyPattern" class="primary" style="margin-top:8px;">Apply Pattern</button>
+  </div>
+</div>
+</div>
+
+<footer class="footer">
+  Created by SANTHOSH
+</footer>
+
+<script>
+// ===== USER PROFILE =====
+let user = JSON.parse(localStorage.getItem('user') || 'null');
+let token = localStorage.getItem('token') || null;
+if(!token || !user){ alert('Please login first'); window.location.href='index.html'; }
+document.getElementById('userInitial').textContent = (user.username||'U').charAt(0).toUpperCase();
+document.getElementById('popupId').textContent = user.username || 'user123';
+document.getElementById('popupName').textContent = user.name || 'User';
+document.getElementById('popupRole').textContent = user.role || 'User';
+const profileIcon = document.getElementById('profileIcon');
+const profilePopup = document.getElementById('profilePopup');
+profileIcon.onclick = ()=>{ profilePopup.style.display = profilePopup.style.display==='block'?'none':'block'; }
+document.getElementById('popupLogoutBtn').onclick = ()=>{ localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href='index.html'; }
+
+// ===== CLIENTS & CALENDAR =====
+let assignmentsData = [];
+const clientListNode = document.getElementById('clientList');
+let selectedClient = null;
+const calendar = document.getElementById('calendar');
+const monthlySummary = document.getElementById('monthlySummary');
+const totalPosters = document.getElementById('totalPosters');
+const totalReels = document.getElementById('totalReels');
+const totalCompleted = document.getElementById('totalCompleted');
+const weekdaysSet = document.getElementById('weekdaysSet');
+const posterCheckboxes = document.querySelectorAll('.posterDay');
+const reelCheckboxes = document.querySelectorAll('.reelDay');
+
+// ===== PERSIST SELECTOR VALUES =====
+const monthPicker = document.getElementById('monthPicker');
+const startWeekdaySelect = document.getElementById('startWeekday');
+const endDateSelect = document.getElementById('endDate');
+monthPicker.value = localStorage.getItem('monthPicker') || `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+startWeekdaySelect.value = localStorage.getItem('startWeekday') || "1";
+endDateSelect.value = localStorage.getItem('endDate') || "31";
+[monthPicker,startWeekdaySelect,endDateSelect].forEach(el=>{
+  el.addEventListener('change', ()=>{ 
+    localStorage.setItem(el.id, el.value); 
+    if(selectedClient) selectClient(selectedClient, document.querySelector('.client-item.active'));
+  });
+});
+
+// ===== FETCH CLIENTS =====
+async function fetchClients(){
+  try {
+    const res = await fetch('http://localhost:4000/api/clients', { headers:{ 'Authorization':'Bearer '+token } });
+    const data = await res.json();
+    const clientsFromServer = data.clients || [];
+    assignmentsData = clientsFromServer || [];
+    if(assignmentsData.length===0){ clientListNode.innerHTML='<div style="color:var(--muted)">No clients assigned</div>'; return; }
+    
+    clientListNode.innerHTML = '';
+    assignmentsData.forEach((a,index)=>{
+      // Ensure each item has an _id that represents the assignment id (server sends assignmentId)
+      const clientObj = { ...a, _id: a.assignmentId || a.sample?._id || a._id || a.assignmentId };
+      assignmentsData[index] = clientObj;
+
+      const div = document.createElement('div'); div.className='client-item';
+      div.innerHTML = `<div style="font-weight:700">${clientObj.name}</div>
+        <div style="font-size:13px;color:var(--muted)">Weekly Posters: 🖼 ${clientObj.weeklyTotals?.posters || 0}</div>
+        <div style="font-size:13px;color:var(--muted)">Weekly Reels: 🎞 ${clientObj.weeklyTotals?.reels || 0}</div>`;
+      div.onclick = ()=>selectClient(clientObj, div);
+      clientListNode.appendChild(div);
+      if(index===0) selectClient(clientObj, div);
+    });
+  } catch(e){ console.error(e); clientListNode.innerHTML='<div style="color:var(--muted)">Error fetching clients</div>'; }
+}
+
+// ===== SELECT CLIENT =====
+async function selectClient(client, node){
+  document.querySelectorAll('.client-item').forEach(c=>c.classList.remove('active'));
+  node.classList.add('active');
+  selectedClient = client;
+  weekdaysSet.style.display = 'block';
+
+  // Load calendar for this client & month
+  await loadCalendarData(client._id, monthPicker.value);
+
+  // Update monthly totals UI (simple math using weeklyTotals and selected endDate)
+  const daysInMonth = parseInt(endDateSelect.value);
+  const weeklyPosters = client.weeklyTotals?.posters || 0;
+  const weeklyReels = client.weeklyTotals?.reels || 0;
+  const fullWeeks = Math.floor(daysInMonth / 7);
+  const monthlyPosters = weeklyPosters * fullWeeks;
+  const monthlyReels   = weeklyReels * fullWeeks;
+  totalPosters.textContent = `Posters: ${monthlyPosters}`;
+  totalReels.textContent = `Reels: ${monthlyReels}`;
+  totalCompleted.textContent = `Completed: 0`;
+}
+
+// ===== CALENDAR RENDER =====
+function renderCalendar(savedDays=[]){
+  calendar.innerHTML = '';
+  const [yearStr, monthStr] = monthPicker.value.split('-');
+  const year = parseInt(yearStr,10);
+  const monthIndex = parseInt(monthStr,10)-1;
+  const daysInMonth = parseInt(endDateSelect.value);
+  const firstCalDay = parseInt(startWeekdaySelect.value);
+  const emptySlots = firstCalDay-1;
+  for(let i=0;i<emptySlots;i++){ const div=document.createElement('div'); div.className='day empty'; calendar.appendChild(div); }
+  for(let d=1; d<=daysInMonth; d++){
+    const div = document.createElement('div'); div.className='day'; div.textContent=d;
+    const dayData = savedDays.find(s=>s.day===d);
+    if(dayData){
+      if(dayData.poster) div.classList.add('poster');
+      if(dayData.reel) div.classList.add('reel');
+      if(dayData.completed) div.classList.add('completed');
+      div.style.background = dayData.completed?(dayData.poster?'var(--poster-dark)':'var(--reel-dark)'):(dayData.poster?'var(--poster-light)':'var(--reel-light)');
+      div.style.color = dayData.completed?'#fff':'#0b5cff';
+      // innerHTML: show number + badges
+      let html = String(d);
+      if(dayData.poster) html += '<span class="badge">🖼 Poster</span>';
+      if(dayData.reel) html += '<span class="badge">🎞 Reel</span>';
+      div.innerHTML = html;
+    } else {
+      div.innerHTML = String(d);
+      div.style.background = '';
+      div.style.color = 'var(--accent-dark)';
+    }
+
+    div.onclick = ()=>{ 
+      // toggle completed only if poster or reel exists
+      div.classList.toggle('completed');
+      if(div.classList.contains('poster')) div.style.background = div.classList.contains('completed')?'var(--poster-dark)':'var(--poster-light)'; 
+      if(div.classList.contains('reel')) div.style.background = div.classList.contains('completed')?'var(--reel-dark)':'var(--reel-light)'; 
+      // if neither poster nor reel, toggling completed just highlights as poster-light fallback? keep default behavior: completed toggles visual only
+      if(!div.classList.contains('poster') && !div.classList.contains('reel')){
+        // no content type — just mark/unmark (use poster style visually when completed)
+        div.style.background = div.classList.contains('completed') ? 'var(--poster-dark)' : '';
+      }
+      div.style.color = div.classList.contains('completed')?'#fff':'#0b5cff'; 
+      updateCompletedCount(); saveCalendarData(); 
+    };
+    calendar.appendChild(div);
+  }
+  updateCompletedCount();
+}
+
+// ===== UPDATE COMPLETED COUNT =====
+function updateCompletedCount(){
+  const completedDays = document.querySelectorAll('.calendar .day.completed').length;
+  totalCompleted.textContent = `Completed: ${completedDays}`;
+}
+
+// ===== SAVE CALENDAR =====
+async function saveCalendarData(){
+  if(!selectedClient) return;
+  const month = monthPicker.value;
+  const days = [];
+  document.querySelectorAll('.calendar .day:not(.empty)').forEach((dayEl)=>{
+    // read the visible day number (safer than relying on index)
+    const dayNum = parseInt(dayEl.textContent) || null;
+    if(!dayNum) return;
+    days.push({ day: dayNum, poster: dayEl.classList.contains('poster'), reel: dayEl.classList.contains('reel'), completed: dayEl.classList.contains('completed') });
+  });
+
+  try {
+    const res = await fetch(`http://localhost:4000/api/assignments/${selectedClient._id}/save-calendar`, { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, 
+      body: JSON.stringify({ month, days }) 
+    });
+    const data = await res.json();
+    if(!data.success){ console.warn('Save calendar error', data); }
+    // optionally show a small transient UI feedback later
+  } catch(err){ console.error('Save calendar failed', err); }
+}
+
+// ===== LOAD CALENDAR DATA =====
+async function loadCalendarData(clientId, month){
+  try{
+    if(!clientId) { renderCalendar(); return; }
+    const res = await fetch(`http://localhost:4000/api/assignments/${clientId}/calendar?month=${month}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const savedDays = data.days || [];
+    renderCalendar(savedDays);
+  } catch(e){ console.error(e); renderCalendar(); }
+}
+
+// ===== APPLY WEEKDAY PATTERN =====
+document.getElementById('applyPattern').onclick = () => {
+  if (!selectedClient) return;
+  const posterDays = Array.from(posterCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+  const reelDays = Array.from(reelCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+  document.querySelectorAll('.calendar .day:not(.empty)').forEach((dayEl, index) => {
+    const weekdayIndex = ((index + parseInt(startWeekdaySelect.value) - 1) % 7);
+    const weekdayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][weekdayIndex];
+    dayEl.classList.remove('poster','reel','completed');
+    if (posterDays.includes(weekdayName)) dayEl.classList.add('poster');
+    if (reelDays.includes(weekdayName)) dayEl.classList.add('reel');
+    dayEl.style.background = dayEl.classList.contains('poster') ? 'var(--poster-light)' : dayEl.classList.contains('reel') ? 'var(--reel-light)' : '';
+    dayEl.style.color = '#0b5cff';
+    const dayNum = parseInt(dayEl.textContent) || (index+1);
+    dayEl.innerHTML = String(dayNum);
+    if(dayEl.classList.contains('poster')) dayEl.innerHTML += '<span class="badge">🖼 Poster</span>';
+    if(dayEl.classList.contains('reel')) dayEl.innerHTML += '<span class="badge">🎞 Reel</span>';
+    dayEl.onclick = ()=>{ 
+      dayEl.classList.toggle('completed'); 
+      if(dayEl.classList.contains('poster')) dayEl.style.background = dayEl.classList.contains('completed')?'var(--poster-dark)':'var(--poster-light)'; 
+      if(dayEl.classList.contains('reel')) dayEl.style.background = dayEl.classList.contains('completed')?'var(--reel-dark)':'var(--reel-light)'; 
+      dayEl.style.color = dayEl.classList.contains('completed')?'#fff':'#0b5cff'; 
+      updateCompletedCount(); saveCalendarData(); 
+    };
+  });
+  updateCompletedCount(); saveCalendarData();
+};
+
+// ===== RESET CALENDAR =====
+document.getElementById('resetSummary').onclick = () => {
+  if (!selectedClient) return;
+  document.querySelectorAll('.calendar .day:not(.empty)').forEach((dayEl) => {
+    const dayNum = parseInt(dayEl.textContent) || dayEl.innerText;
+    dayEl.classList.remove('poster','reel','completed');
+    dayEl.style.background = '';
+    dayEl.style.color = 'var(--accent-dark)';
+    dayEl.innerHTML = String(dayNum);
+  });
+  updateCompletedCount();
+  saveCalendarData();
+};
+
+// ===== INITIALIZE =====
+fetchClients();
+</script>
+</body>
+</html>
