@@ -98,6 +98,11 @@ function authMiddleware(req,res,next){
   }
 }
 
+// ===== Root Route (NEW) =====
+app.get('/', (req, res) => {
+  res.send('🚀 Schedule System Backend is running!');
+});
+
 // ===== Register =====
 app.post('/api/register', async (req,res)=>{
   try{
@@ -171,7 +176,6 @@ app.get('/api/users', authMiddleware, async (req,res)=>{
   }
 });
 
-
 // ===== Clients listing =====
 app.get('/api/clients', authMiddleware, async (req,res)=>{
   try{
@@ -209,7 +213,6 @@ app.get('/api/clients', authMiddleware, async (req,res)=>{
       }
       return res.json({ success: true, clients });
     } else {
-      // === USER PANEL FIX ===
       const assigns = await Assignment.find({ userId: req.user.userId }).lean();
       const clients = assigns.map(a=>({
         name: a.clientName,
@@ -234,7 +237,6 @@ app.post('/api/assignments', authMiddleware, async (req,res)=>{
     const { clientName, weeklyTotals, assignedUser, startDate } = req.body;
     if(!clientName || !assignedUser) return res.status(400).json({ error: 'Missing client or user' });
 
-    // ensure client exists
     let client = await Client.findOne({ name: clientName });
     if(!client){
       client = new Client({ name: clientName, createdBy: req.user.userId });
@@ -272,24 +274,21 @@ app.post('/api/assignments', authMiddleware, async (req,res)=>{
 app.get('/api/assignments/:id/calendar', authMiddleware, async (req, res) => {
   try {
     const assignmentId = req.params.id;
-    const month = req.query.month; // expected "YYYY-MM"
+    const month = req.query.month;
     if (!assignmentId) return res.status(400).json({ error: 'Assignment id required' });
     if (!month) return res.status(400).json({ error: 'Month is required (YYYY-MM)' });
 
     const assignment = await Assignment.findById(assignmentId).lean();
     if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
 
-    // only admin or owner can read
     if (req.user.role !== 'admin' && req.user.userId !== assignment.userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    // calendar is a Map - when read from DB it becomes an object
     let days = [];
     if (assignment.calendar && (assignment.calendar instanceof Map)) {
       days = assignment.calendar.get(month) || [];
     } else if (assignment.calendar && typeof assignment.calendar === 'object') {
-      // Mongoose map can appear as plain object in lean()
       days = assignment.calendar[month] || [];
     }
 
@@ -304,7 +303,7 @@ app.get('/api/assignments/:id/calendar', authMiddleware, async (req, res) => {
 app.post('/api/assignments/:id/save-calendar', authMiddleware, async (req, res) => {
   try {
     const assignmentId = req.params.id;
-    const { month, days } = req.body; // days = [{day, poster, reel, completed}, ...]
+    const { month, days } = req.body;
 
     if (!assignmentId) return res.status(400).json({ error: 'Assignment id required' });
     if (!month || !Array.isArray(days)) return res.status(400).json({ error: 'Month and days are required' });
@@ -312,16 +311,13 @@ app.post('/api/assignments/:id/save-calendar', authMiddleware, async (req, res) 
     const assignment = await Assignment.findById(assignmentId);
     if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
 
-    // only admin or owner can save
     if (req.user.role !== 'admin' && req.user.userId !== assignment.userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    // assignment.calendar is a Map -> use set() if Map, otherwise assign object key
     if (assignment.calendar instanceof Map) {
       assignment.calendar.set(month, days);
     } else {
-      // fallback if calendar stored as plain object
       const obj = assignment.calendar || {};
       obj[month] = days;
       assignment.calendar = obj;
@@ -355,8 +351,6 @@ app.delete('/api/clients/:clientName', authMiddleware, async (req,res)=>{
   }catch(err){ console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
-
 // ===== Start Server =====
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, ()=>console.log(`🚀 Server running on port ${PORT}`));
-
