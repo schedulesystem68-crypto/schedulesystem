@@ -138,6 +138,8 @@ window.onload = () => {
   loadClientSummary();
 };
 
+
+
 // Profile menu
 const profileMenu = document.getElementById('profileMenu');
 const adminProfile = document.getElementById('adminProfile');
@@ -149,7 +151,7 @@ document.addEventListener('click', e => { if(!adminProfile.contains(e.target) &&
 async function loadUsers(){
   try{
     const token = localStorage.getItem('token');
-    const res = await fetch(`http://localhost:4000/api/users`, { headers: { 'Authorization':'Bearer '+token } });
+    const res = await fetch(`https://schedulesystem.onrender.com/api/users`, { headers: { 'Authorization':'Bearer '+token } });
     const data = await res.json();
     const usersArray = Array.isArray(data.users)?data.users:[];
 
@@ -174,7 +176,7 @@ async function loadUsers(){
 async function loadClientSummary(){
   try{
     const token = localStorage.getItem('token');
-    const res = await fetch(`http://localhost:4000/api/clients`, { headers:{'Authorization':'Bearer '+token} });
+    const res = await fetch(`https://schedulesystem.onrender.com/api/clients`, { headers:{'Authorization':'Bearer '+token} });
     const data = await res.json();
     const clients = Array.isArray(data.clients)?data.clients:[];
 
@@ -222,7 +224,7 @@ document.getElementById('assignTaskBtn').onclick = async () => {
   try{
     const token = localStorage.getItem('token');
     const body = { clientName: client, weeklyTotals:{posters:weeklyPosters,reels:weeklyReels}, assignedUser, startDate:start };
-    const res = await fetch(`http://localhost:4000/api/assignments`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify(body) });
+    const res = await fetch(`https://schedulesystem.onrender.com/api/assignments`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify(body) });
     const data = await res.json();
     if(!res.ok){ showToast('❌ '+(data.error||'Failed to assign')); return; }
 
@@ -237,7 +239,7 @@ async function deleteClient(clientName){
   if(!confirm('Are you sure you want to delete this client?')) return;
   try{
     const token = localStorage.getItem('token');
-    const res = await fetch(`http://localhost:4000/api/clients/${clientName}`, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+    const res = await fetch(`https://schedulesystem.onrender.com/api/clients/${clientName}`, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
     if(!res.ok){ showToast('❌ Failed to delete'); return; }
     showToast('✅ Client deleted'); loadUsers(); loadClientSummary();
   }catch(e){ console.error(e); showToast('❌ Server error'); }

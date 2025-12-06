@@ -188,7 +188,7 @@ endDateSelect.value = localStorage.getItem('endDate') || "31";
 // ===== FETCH CLIENTS =====
 async function fetchClients(){
   try {
-    const res = await fetch('http://localhost:4000/api/clients', { headers:{ 'Authorization':'Bearer '+token } });
+    const res = await fetch('https://schedulesystem.onrender.com/api/clients', { headers:{ 'Authorization':'Bearer '+token } });
     const data = await res.json();
     const clientsFromServer = data.clients || [];
     assignmentsData = clientsFromServer || [];
@@ -300,7 +300,7 @@ async function saveCalendarData(){
   });
 
   try {
-    const res = await fetch(`http://localhost:4000/api/assignments/${selectedClient._id}/save-calendar`, { 
+    const res = await fetch(`https://schedulesystem.onrender.com/api/assignments/${selectedClient._id}/save-calendar`, { 
       method:'POST', 
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, 
       body: JSON.stringify({ month, days }) 
@@ -315,7 +315,7 @@ async function saveCalendarData(){
 async function loadCalendarData(clientId, month){
   try{
     if(!clientId) { renderCalendar(); return; }
-    const res = await fetch(`http://localhost:4000/api/assignments/${clientId}/calendar?month=${month}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(`https://schedulesystem.onrender.com/api/assignments/${clientId}/calendar?month=${month}`, { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
     const savedDays = data.days || [];
     renderCalendar(savedDays);
